@@ -677,7 +677,11 @@ class RedisCluster(Redis):
                 if ttl < self.RedisClusterRequestTTL / 2:
                     time.sleep(0.05)
                 else:
-                    try_random_node = True
+                    # If the command is not a read command, we must use the master node for the slot
+                    # otherwise we just get a MOVE response back, sending us back to the main
+                    # node.
+                    if command in READ_COMMANDS:
+                        try_random_node = True
             except ClusterDownError as e:
                 log.exception("ClusterDownError")
 
